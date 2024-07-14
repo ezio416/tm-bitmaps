@@ -1,12 +1,13 @@
 // c 2024-07-13
 // m 2024-07-14
 
-UI::Font@     font;
-const string  GREEN = "\\$0F0";
-const string  RED   = "\\$F00";
-MemoryBuffer@ smile;
-nvg::Texture@ tex;
-const string  title = "\\$FFF" + Icons::Arrows + "\\$G Test_Bitmaps";
+BitmapWithCoreHeader@ bmp;
+UI::Font@             font;
+const string          GREEN = "\\$0F0";
+const string          RED   = "\\$F00";
+// MemoryBuffer@         smile;
+nvg::Texture@         tex;
+const string          title = "\\$FFF" + Icons::Arrows + "\\$G Test_Bitmaps";
 
 [Setting category="General" name="Enabled"]
 bool S_Enabled = true;
@@ -21,8 +22,8 @@ void Main() {
     @font = UI::LoadFont("DroidSansMono.ttf");
 
     // IO::File file("C:/Users/Ezio/OpenplanetNext/Plugins/Test_Bitmaps/smile.bmp", IO::FileMode::Read);
-    IO::FileSource file("smile.bmp");
-    @smile = file.Read(file.Size());
+    // IO::FileSource file("smile.bmp");
+    // @smile = file.Read(file.Size());
 
     // @tex = nvg::LoadTexture(buf);
 }
@@ -33,7 +34,7 @@ void Render() {
         || (S_HideWithGame && !UI::IsGameUIVisible())
         || (S_HideWithOP && !UI::IsOverlayShown())
         // || tex is null
-        || smile is null
+        // || smile is null
     )
         return;
 
@@ -52,7 +53,15 @@ void Render() {
 
         // MemoryBufferViewer(buf);
         // MemoryBufferViewer(smile);
-        View1BitBitmap(smile);
+        // View1BitBitmap(smile);
+
+        if (bmp is null) {
+            IO::FileSource file("bmp.bmp");
+            @bmp = BitmapWithCoreHeader(file.Read(file.Size()));
+        } else {
+            UI::Text("width: " + bmp.width);
+            UI::Text("height: " + bmp.height);
+        }
     }
     UI::End();
 }
@@ -278,10 +287,6 @@ void View1BitBitmap(MemoryBuffer@ buf) {
     UI::PopFont();
 }
 
-string Int64ToHex(const int64 i, const bool pre = false) {
-    return (pre ? "0x" : "") + Text::Format("%llX", i);
-}
-
 void MemoryBufferViewer(MemoryBuffer@ buf) {
     const uint64 size = buf.GetSize();
 
@@ -314,31 +319,4 @@ void MemoryBufferViewer(MemoryBuffer@ buf) {
     }
 
     UI::PopFont();
-}
-
-string UInt8ToBin(const uint8 u, const bool pre = false) {
-    string ret = pre ? "0b" : "";
-
-    for (int i = 7; i >= 0; i--)
-        ret += tostring(u >> i & 1);
-
-    return ret;
-}
-
-string UInt8ToChar(const uint8 n) {
-    string ret = "A";
-    ret[0] = n;
-    return ret;
-}
-
-string Zpad(const string &in hex, const uint length = 2) {
-    if (uint(hex.Length) >= length)
-        return hex;
-
-    string res;
-
-    for (uint i = hex.Length; i < length; i++)
-        res += "0";
-
-    return res + hex;
 }
