@@ -69,7 +69,7 @@ class Bitmap {
     }
 }
 
-class BitmapWithCoreHeader : Bitmap {
+class BitmapCoreHeader : Bitmap {
     private uint offsetWidth    = offsetInfoSize + 0x4;
     private uint offsetHeight   = offsetInfoSize + 0x6;
     private uint offsetPlanes   = offsetInfoSize + 0x8;
@@ -79,8 +79,8 @@ class BitmapWithCoreHeader : Bitmap {
     uint16 height;
     uint16 width;
 
-    BitmapWithCoreHeader() { super(); }
-    BitmapWithCoreHeader(MemoryBuffer@ buf) {
+    BitmapCoreHeader() { super(); }
+    BitmapCoreHeader(MemoryBuffer@ buf) {
         super(buf);
 
         if (infoHeaderType != InfoHeader::BITMAPCOREHEADER)
@@ -106,5 +106,44 @@ class BitmapWithCoreHeader : Bitmap {
         const uint16[] validBitCounts = { 1, 4, 8, 24 };
         if (validBitCounts.Find(bitCount) == -1)
             throw("invalid bit count: " + bitCount);
+    }
+}
+
+class BitmapV1Header : Bitmap {
+    private uint offsetWidth    = offsetInfoSize + 0x4;
+    private uint offsetHeight   = offsetInfoSize + 0x8;
+    private uint offsetPlanes   = offsetInfoSize + 0xC;
+    private uint offsetBitCount = offsetInfoSize + 0xE;
+
+    uint16 bitCount;
+    int    height;
+    int    width;
+
+    BitmapV1Header() { super(); }
+    BitmapV1Header(MemoryBuffer@ buf) {
+        super(buf);
+
+        if (infoHeaderType != InfoHeader::BITMAPINFOHEADER)
+            throw("bitmap does not have a BITMAPINFOHEADER");
+
+        buf.Seek(offsetWidth);
+        width = buf.ReadInt32();
+        if (width < 1)
+            throw("width < 1: " + width);
+
+        buf.Seek(offsetHeight);
+        height = buf.ReadInt32();
+        if (height < 1)
+            throw("height < 1: " + height);
+
+        buf.Seek(offsetPlanes);
+        const uint16 planes = buf.ReadUInt16();
+        if (planes != 1)
+            throw("planes is not 1: " + planes);
+
+        buf.Seek(offsetBitCount);
+        bitCount = buf.ReadUInt16();
+        if (bitCount == 0)
+            throw("bitCount is 0");
     }
 }

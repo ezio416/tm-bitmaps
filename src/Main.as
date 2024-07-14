@@ -1,13 +1,13 @@
 // c 2024-07-13
 // m 2024-07-14
 
-BitmapWithCoreHeader@ bmp;
-UI::Font@             font;
-const string          GREEN = "\\$0F0";
-const string          RED   = "\\$F00";
-// MemoryBuffer@         smile;
-nvg::Texture@         tex;
-const string          title = "\\$FFF" + Icons::Arrows + "\\$G Test_Bitmaps";
+BitmapCoreHeader@ bmp;
+UI::Font@         font;
+const string      GREEN = "\\$0F0";
+const string      RED   = "\\$F00";
+// MemoryBuffer@     smile;
+nvg::Texture@     tex;
+const string      title = "\\$FFF" + Icons::Arrows + "\\$G Test_Bitmaps";
 
 [Setting category="General" name="Enabled"]
 bool S_Enabled = true;
@@ -57,7 +57,7 @@ void Render() {
 
         if (bmp is null) {
             IO::FileSource file("bmp.bmp");
-            @bmp = BitmapWithCoreHeader(file.Read(file.Size()));
+            @bmp = BitmapCoreHeader(file.Read(file.Size()));
         } else {
             UI::Text("width: " + bmp.width);
             UI::Text("height: " + bmp.height);
