@@ -31,10 +31,14 @@ class Bitmap {
     private   uint64     size;
     private   uint[]     validInfoHeaderSizes = { 12, 40, 108, 124 };
 
+    MemoryBuffer@ buf;
+
     Bitmap() { }
     Bitmap(MemoryBuffer@ buf) {
         if (buf is null)
             throw("buffer null");
+
+        this.buf = buf;
 
         size = buf.GetSize();
         if (size < minFileSize)
