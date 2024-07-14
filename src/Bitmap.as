@@ -38,7 +38,7 @@ class Bitmap {
         if (buf is null)
             throw("buffer null");
 
-        this.buf = buf;
+        @this.buf = buf;
 
         size = buf.GetSize();
         if (size < minFileSize)
