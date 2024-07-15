@@ -82,6 +82,21 @@ namespace Bitmaps {
             infoHeaderType = InfoHeader(infoHeaderSize);
         }
 
+        MemoryBuffer@ ToBuffer() {
+            MemoryBuffer@ buf = MemoryBuffer(size);
+
+            buf.Seek(offsetSignature);
+            buf.Write(signature);
+
+            buf.Seek(offsetFileSize);
+            buf.Write(fileSize);
+
+            buf.Seek(offsetDataLoc);
+            buf.Write(dataOffset);
+
+            return buf;
+        }
+
         Json::Value@ ToJson() {
             Json::Value@ json = Json::Object();
 
@@ -95,25 +110,6 @@ namespace Bitmaps {
 
         string ToString() final {
             return Json::Write(ToJson());
-        }
-
-        protected MemoryBuffer@ WriteBuf() {
-            return null;
-        }
-
-        protected MemoryBuffer@ WriteFileHeader() final {
-            MemoryBuffer@ buf = MemoryBuffer(size);
-
-            buf.Seek(offsetSignature);
-            buf.Write(signature);
-
-            buf.Seek(offsetFileSize);
-            buf.Write(fileSize);
-
-            buf.Seek(offsetDataLoc);
-            buf.Write(dataOffset);
-
-            return buf;
         }
     }
 
@@ -164,18 +160,8 @@ namespace Bitmaps {
                 throw("data not aligned to 4 bytes");
         }
 
-        Json::Value@ ToJson() override {
-            Json::Value@ json = Bitmap::ToJson();
-
-            json["bitCount"] = bitCount;
-            json["height"]   = height;
-            json["width"]    = width;
-
-            return json;
-        }
-
-        MemoryBuffer@ WriteBuf() override {
-            MemoryBuffer@ buf = WriteFileHeader();
+        MemoryBuffer@ ToBuffer() override {
+            MemoryBuffer@ buf = Bitmap::ToBuffer();
 
             buf.Seek(offsetInfoSize);
             buf.Write(uint(infoHeaderType));
@@ -196,6 +182,16 @@ namespace Bitmaps {
             buf.WriteFromBuffer(data, data.GetSize());
 
             return buf;
+        }
+
+        Json::Value@ ToJson() override {
+            Json::Value@ json = Bitmap::ToJson();
+
+            json["bitCount"] = bitCount;
+            json["height"]   = height;
+            json["width"]    = width;
+
+            return json;
         }
     }
 
@@ -248,6 +244,14 @@ namespace Bitmaps {
             compression = Compression(comp);
         }
 
+        MemoryBuffer@ ToBuffer() override {
+            MemoryBuffer@ buf = Bitmap::ToBuffer();
+
+            ;
+
+            return buf;
+        }
+
         Json::Value@ ToJson() override {
             Json::Value@ json = Bitmap::ToJson();
 
@@ -258,10 +262,6 @@ namespace Bitmaps {
             json["width"]       = width;
 
             return json;
-        }
-
-        MemoryBuffer@ WriteBuf() override {
-            return null;
         }
     }
 }
