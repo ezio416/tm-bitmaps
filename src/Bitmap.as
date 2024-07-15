@@ -85,15 +85,15 @@ namespace Bitmaps {
         Json::Value@ ToJson() {
             Json::Value@ json = Json::Object();
 
-            json["Signature"]      = signature;
-            json["FileSize"]       = fileSize;
-            json["DataOffset"]     = dataOffset;
-            json["InfoHeaderSize"] = uint(infoHeaderType);
+            json["signature"]      = signature;
+            json["fileSize"]       = fileSize;
+            json["dataOffset"]     = dataOffset;
+            json["infoHeaderSize"] = uint(infoHeaderType);
 
             return json;
         }
 
-        string ToString() {
+        string ToString() final {
             return Json::Write(ToJson());
         }
 
@@ -101,7 +101,7 @@ namespace Bitmaps {
             return null;
         }
 
-        protected MemoryBuffer@ WriteFileHeader() {
+        protected MemoryBuffer@ WriteFileHeader() final {
             MemoryBuffer@ buf = MemoryBuffer(size);
 
             buf.Seek(offsetSignature);
@@ -162,6 +162,16 @@ namespace Bitmaps {
                 throw("data is empty");
             if (dataSize % 4 != 0)
                 throw("data not aligned to 4 bytes");
+        }
+
+        Json::Value@ ToJson() override {
+            Json::Value@ json = Bitmap::ToJson();
+
+            json["bitCount"] = bitCount;
+            json["height"]   = height;
+            json["width"]    = width;
+
+            return json;
         }
 
         MemoryBuffer@ WriteBuf() override {
@@ -236,6 +246,18 @@ namespace Bitmaps {
             if (validCompressionTypes.Find(comp) == -1)
                 throw("invalid compression type: " + comp);
             compression = Compression(comp);
+        }
+
+        Json::Value@ ToJson() override {
+            Json::Value@ json = Bitmap::ToJson();
+
+            json["bitCount"]    = bitCount;
+            json["compression"] = uint(compression);
+            json["height"]      = height;
+            json["imageSize"]   = imageSize;
+            json["width"]       = width;
+
+            return json;
         }
 
         MemoryBuffer@ WriteBuf() override {
