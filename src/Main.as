@@ -1,11 +1,11 @@
 // c 2024-07-13
 // m 2024-07-15
 
-BitmapCoreHeader@ bmp;
-UI::Font@         font;
-const string      GREEN = "\\$0F0";
-const string      RED   = "\\$F00";
-const string      title = "\\$FFF" + Icons::FileImageO + "\\$G Bitmaps";
+Bitmaps::BitmapCoreHeader@ bmp;
+UI::Font@                  font;
+const string               GREEN = "\\$0F0";
+const string               RED   = "\\$F00";
+const string               title = "\\$FFF" + Icons::FileImageO + "\\$G Bitmaps";
 
 [Setting category="General" name="Enabled"]
 bool S_Enabled = true;
@@ -20,7 +20,7 @@ void Main() {
     @font = UI::LoadFont("DroidSansMono.ttf");
 
     IO::FileSource file("test_images/bmp.bmp");
-    @bmp = BitmapCoreHeader(file.Read(file.Size()));
+    @bmp = Bitmaps::BitmapCoreHeader(file.Read(file.Size()));
 }
 
 void Render() {

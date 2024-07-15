@@ -6,3 +6,5 @@ version = "0.1.0"
 
 [script]
 module = "Bitmaps"
+exports = [ "src/Export.as" ]
+shared_exports = [ "src/Bitmap.as" ]
