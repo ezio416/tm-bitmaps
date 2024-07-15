@@ -1,5 +1,5 @@
 // c 2024-07-13
-// m 2024-07-14
+// m 2024-07-15
 
 BitmapCoreHeader@ bmp;
 UI::Font@         font;
@@ -7,7 +7,7 @@ const string      GREEN = "\\$0F0";
 const string      RED   = "\\$F00";
 // MemoryBuffer@     smile;
 nvg::Texture@     tex;
-const string      title = "\\$FFF" + Icons::Arrows + "\\$G Test_Bitmaps";
+const string      title = "\\$FFF" + Icons::FileImageO + "\\$G Bitmaps";
 
 [Setting category="General" name="Enabled"]
 bool S_Enabled = true;
