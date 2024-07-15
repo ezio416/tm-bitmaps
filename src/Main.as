@@ -59,8 +59,7 @@ void Render() {
             IO::FileSource file("bmp.bmp");
             @bmp = BitmapCoreHeader(file.Read(file.Size()));
         } else {
-            UI::Text("width: " + bmp.width);
-            UI::Text("height: " + bmp.height);
+            UI::Text(tostring(bmp));
         }
     }
     UI::End();

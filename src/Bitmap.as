@@ -1,13 +1,21 @@
 // c 2024-07-14
-// m 2024-07-14
+// m 2024-07-15
 
 enum Compression {
-    BI_RGB,
-    BI_RLE8,
-    BI_RLE4
+    BI_RGB            = 0,
+    BI_RLE8           = 1,
+    BI_RLE4           = 2,
+    BI_BITFIELDS      = 3,
+    BI_JPEG           = 4,
+    BI_PNG            = 5,
+    BI_ALPHABITFIELDS = 6,
+    BI_CMYK           = 11,
+    BI_CMYKRLE8       = 12,
+    BI_CMYKRLE4       = 13
 }
 
 enum InfoHeader {
+    NONE             = 0,
     BITMAPCOREHEADER = 12,
     BITMAPINFOHEADER = 40,
     BITMAPV4HEADER   = 108,
@@ -15,23 +23,29 @@ enum InfoHeader {
 }
 
 class Bitmap {
-    private   uint offsetSig1     = 0x0;
-    private   uint offsetSig2     = 0x1;
-    private   uint offsetFileSize = 0x2;
-    private   uint offsetDataSize = 0xA;
-    protected uint offsetInfoSize = 0xE;
+    private uint minDataSize = 4;
+    private uint minFileSize = 30;
 
-    private   uint       dataOffset;
-    private   uint       fileHeaderSize       = 14;
-    private   uint       fileSize;
-    protected InfoHeader infoHeaderType;
-    protected uint       minDataSize          = 4;
-    private   uint       minFileSize          = 30;
-    private   string     signature;
-    private   uint64     size;
-    private   uint[]     validInfoHeaderSizes = { 12, 40, 108, 124 };
+    private   uint offsetSignature = 0x0;
+    private   uint offsetFileSize  = offsetSignature + 0x2;
+    protected uint offsetDataLoc   = offsetFileSize  + 0x8;  // skip 4 bytes reserved
+    protected uint offsetInfoSize  = offsetDataLoc   + 0x4;
+
+    private   uint   dataOffset;
+    protected uint   fileSize;
+    private   string signature;
+    private   uint64 size;
+
+    private InfoHeader _infoHeaderType;
+    InfoHeader get_infoHeaderType() {
+        return _infoHeaderType;
+    }
+    private void set_infoHeaderType(InfoHeader type) {
+        _infoHeaderType = type;
+    }
 
     MemoryBuffer@ buf;
+    MemoryBuffer@ data;
 
     Bitmap() { }
     Bitmap(MemoryBuffer@ buf) {
@@ -44,10 +58,8 @@ class Bitmap {
         if (size < minFileSize)
             throw("buffer too small: " + size);
 
-        buf.Seek(offsetSig1);
-        signature += UInt8ToChar(buf.ReadUInt8());
-        buf.Seek(offsetSig2);
-        signature += UInt8ToChar(buf.ReadUInt8());
+        buf.Seek(offsetSignature);
+        signature = buf.ReadString(2);
         if (signature != "BM")
             throw("invalid signature: " + signature);
 
@@ -56,24 +68,59 @@ class Bitmap {
         if (fileSize != size)
             throw("fileSize does not match buffer size: " + fileSize + " != " + size);
 
-        buf.Seek(offsetDataSize);
+        buf.Seek(offsetDataLoc);
         dataOffset = buf.ReadUInt32();
         if (dataOffset < minFileSize - minDataSize || dataOffset > fileSize - minDataSize)
             throw("invalid dataOffset: " + dataOffset);
 
         buf.Seek(offsetInfoSize);
         const uint infoHeaderSize = buf.ReadUInt32();
+        const uint[] validInfoHeaderSizes = { 12, 40, 108, 124 };
         if (validInfoHeaderSizes.Find(infoHeaderSize) == -1)
             throw("invalid infoHeaderSize: " + infoHeaderSize);
         infoHeaderType = InfoHeader(infoHeaderSize);
+    }
+
+    Json::Value@ ToJson() {
+        Json::Value@ json = Json::Object();
+
+        json["Signature"]      = signature;
+        json["FileSize"]       = fileSize;
+        json["DataOffset"]     = dataOffset;
+        json["InfoHeaderSize"] = uint(infoHeaderType);
+
+        return json;
+    }
+
+    string ToString() {
+        return Json::Write(ToJson());
+    }
+
+    protected MemoryBuffer@ WriteBuf() {
+        return null;
+    }
+
+    protected MemoryBuffer@ WriteFileHeader() {
+        MemoryBuffer@ buf = MemoryBuffer(size);
+
+        buf.Seek(offsetSignature);
+        buf.Write(signature);
+
+        buf.Seek(offsetFileSize);
+        buf.Write(fileSize);
+
+        buf.Seek(offsetDataLoc);
+        buf.Write(dataOffset);
+
+        return buf;
     }
 }
 
 class BitmapCoreHeader : Bitmap {
     private uint offsetWidth    = offsetInfoSize + 0x4;
-    private uint offsetHeight   = offsetInfoSize + 0x6;
-    private uint offsetPlanes   = offsetInfoSize + 0x8;
-    private uint offsetBitCount = offsetInfoSize + 0xA;
+    private uint offsetHeight   = offsetWidth    + 0x2;
+    private uint offsetPlanes   = offsetHeight   + 0x2;
+    private uint offsetBitCount = offsetPlanes   + 0x2;
 
     uint16 bitCount;
     uint16 height;
@@ -106,18 +153,54 @@ class BitmapCoreHeader : Bitmap {
         const uint16[] validBitCounts = { 1, 4, 8, 24 };
         if (validBitCounts.Find(bitCount) == -1)
             throw("invalid bit count: " + bitCount);
+
+        buf.Seek(offsetDataLoc);
+        @data = buf.ReadBuffer(fileSize - offsetDataLoc);
+        const uint64 dataSize = data.GetSize();
+        if (dataSize == 0)
+            throw("data is empty");
+        if (dataSize % 4 != 0)
+            throw("data not aligned to 4 bytes");
+    }
+
+    MemoryBuffer@ WriteBuf() override {
+        MemoryBuffer@ buf = WriteFileHeader();
+
+        buf.Seek(offsetInfoSize);
+        buf.Write(uint(infoHeaderType));
+
+        buf.Seek(offsetWidth);
+        buf.Write(width);
+
+        buf.Seek(offsetHeight);
+        buf.Write(height);
+
+        buf.Seek(offsetPlanes);
+        buf.Write(uint16(1));
+
+        buf.Seek(offsetBitCount);
+        buf.Write(bitCount);
+
+        buf.Seek(offsetDataLoc);
+        buf.WriteFromBuffer(data, data.GetSize());
+
+        return buf;
     }
 }
 
 class BitmapV1Header : Bitmap {
-    private uint offsetWidth    = offsetInfoSize + 0x4;
-    private uint offsetHeight   = offsetInfoSize + 0x8;
-    private uint offsetPlanes   = offsetInfoSize + 0xC;
-    private uint offsetBitCount = offsetInfoSize + 0xE;
+    private uint offsetWidth       = offsetInfoSize    + 0x4;
+    private uint offsetHeight      = offsetWidth       + 0x4;
+    private uint offsetPlanes      = offsetHeight      + 0x4;
+    private uint offsetBitCount    = offsetPlanes      + 0x2;
+    private uint offsetCompression = offsetBitCount    + 0x2;
+    private uint offsetImageSize   = offsetCompression + 0x4;
 
-    uint16 bitCount;
-    int    height;
-    int    width;
+    uint16      bitCount;
+    Compression compression;
+    int         height;
+    uint        imageSize;
+    int         width;
 
     BitmapV1Header() { super(); }
     BitmapV1Header(MemoryBuffer@ buf) {
@@ -145,5 +228,24 @@ class BitmapV1Header : Bitmap {
         bitCount = buf.ReadUInt16();
         if (bitCount == 0)
             throw("bitCount is 0");
+
+        buf.Seek(offsetCompression);
+        const uint comp = buf.ReadUInt32();
+        const uint[] validCompressionTypes = { 0, 1, 2, 3, 4, 5, 6, 11, 12, 13 };
+        if (validCompressionTypes.Find(comp) == -1)
+            throw("invalid compression type: " + comp);
+        compression = Compression(comp);
+    }
+
+    MemoryBuffer@ WriteBuf() override {
+        return null;
+    }
+}
+
+InfoHeader GetHeaderType(MemoryBuffer@ buf) {
+    try {
+        return Bitmap(buf).infoHeaderType;
+    } catch {
+        return InfoHeader::NONE;
     }
 }
