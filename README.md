@@ -1,9 +1,9 @@
 ![Signed](https://img.shields.io/badge/Signed-No-FF3333)
 ![Game Trackmania](https://img.shields.io/badge/Game-Trackmania-blue)
 
-# PluginTemplate
+# Bitmaps
 
-A template for writing plugins more easily.
+A dependency plugin for interacting with bitmap images. Intended for use as a frame buffer for NVG rendering, but a lot of work is still needed to realize that goal.
 
 <!-- ![Signed](https://img.shields.io/badge/Signed-Yes-00AA00) -->
 <!-- ![Signed](https://img.shields.io/badge/Signed-School_Mode-CC1199) -->
