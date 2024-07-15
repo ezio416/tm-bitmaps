@@ -5,8 +5,6 @@ BitmapCoreHeader@ bmp;
 UI::Font@         font;
 const string      GREEN = "\\$0F0";
 const string      RED   = "\\$F00";
-// MemoryBuffer@     smile;
-nvg::Texture@     tex;
 const string      title = "\\$FFF" + Icons::FileImageO + "\\$G Bitmaps";
 
 [Setting category="General" name="Enabled"]
@@ -21,11 +19,8 @@ bool S_HideWithOP = false;
 void Main() {
     @font = UI::LoadFont("DroidSansMono.ttf");
 
-    // IO::File file("C:/Users/Ezio/OpenplanetNext/Plugins/Test_Bitmaps/smile.bmp", IO::FileMode::Read);
-    // IO::FileSource file("smile.bmp");
-    // @smile = file.Read(file.Size());
-
-    // @tex = nvg::LoadTexture(buf);
+    IO::FileSource file("test_images/bmp.bmp");
+    @bmp = BitmapCoreHeader(file.Read(file.Size()));
 }
 
 void Render() {
@@ -33,34 +28,12 @@ void Render() {
         || !S_Enabled
         || (S_HideWithGame && !UI::IsGameUIVisible())
         || (S_HideWithOP && !UI::IsOverlayShown())
-        // || tex is null
-        // || smile is null
+        || bmp is null
     )
         return;
 
-    // nvg::Paint paint = nvg::TexturePattern(vec2(50.0f, 50.0f), vec2(50.0f, 50.0f), 0.0f, tex, 1.0f);
-
-    // nvg::BeginPath();
-    // nvg::FillPaint(paint);
-
     if (UI::Begin(title, S_Enabled, UI::WindowFlags::None)) {
-        // MemoryBuffer@ buf = MemoryBuffer();
-
-        // for (uint8 i = 0; i < 64; i++) {
-        //     buf.Seek(i);
-        //     buf.Write(i);
-        // }
-
-        // MemoryBufferViewer(buf);
-        // MemoryBufferViewer(smile);
-        // View1BitBitmap(smile);
-
-        if (bmp is null) {
-            IO::FileSource file("bmp.bmp");
-            @bmp = BitmapCoreHeader(file.Read(file.Size()));
-        } else {
-            UI::Text(tostring(bmp));
-        }
+        UI::Text(tostring(bmp));
     }
     UI::End();
 }
