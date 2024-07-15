@@ -3,8 +3,7 @@
 
 Bitmaps::BitmapCoreHeader@ bmp;
 UI::Font@                  font;
-const string               GREEN = "\\$0F0";
-const string               RED   = "\\$F00";
+Bitmaps::BitmapV1Header@   smile;
 const string               title = "\\$FFF" + Icons::FileImageO + "\\$G Bitmaps";
 
 [Setting category="General" name="Enabled"]
@@ -21,6 +20,9 @@ void Main() {
 
     IO::FileSource file("test_images/bmp.bmp");
     @bmp = Bitmaps::BitmapCoreHeader(file.Read(file.Size()));
+
+    IO::FileSource file2("test_images/smile.bmp");
+    @smile = Bitmaps::BitmapV1Header(file2.Read(file2.Size()));
 }
 
 void Render() {
@@ -29,11 +31,25 @@ void Render() {
         || (S_HideWithGame && !UI::IsGameUIVisible())
         || (S_HideWithOP && !UI::IsOverlayShown())
         || bmp is null
+        // || smile is null
     )
         return;
 
     if (UI::Begin(title, S_Enabled, UI::WindowFlags::None)) {
-        UI::Text(tostring(bmp));
+        UI::ViewMemoryBuffer(bmp.buf, font);
+        // UI::ViewMemoryBuffer(smile.buf, font);
+
+        UI::Separator();
+
+        // UI::Text(tostring(bmp));
+        UI::Text(JsonPretty(bmp.ToJson()));
+        // UI::Text(tostring(smile));
+        // UI::Text(JsonPretty(smile.ToJson()));
+
+        UI::Separator();
+
+        UI::ViewMemoryBuffer(bmp.ToBuffer(), font);
+        // UI::ViewMemoryBuffer(smile.ToBuffer(), font);
     }
     UI::End();
 }
@@ -255,40 +271,6 @@ void View1BitBitmap(MemoryBuffer@ buf) {
 
     for (uint i = 0; i < data.Length; i++)
         UI::Text(data[i]);
-
-    UI::PopFont();
-}
-
-void MemoryBufferViewer(MemoryBuffer@ buf) {
-    const uint64 size = buf.GetSize();
-
-    UI::PushFont(font);
-
-    for (uint i = 0; i < size; i++) {
-        buf.Seek(i);
-
-        const uint8  val = buf.ReadUInt8();
-        const string hex = Zpad(Int64ToHex(val));
-
-        UI::Text((val == 0 ? RED : GREEN) + hex);
-        if (UI::IsItemHovered()) {
-            UI::BeginTooltip();
-            UI::Text(tostring(val));
-            UI::Text(UInt8ToChar(val));
-            UI::Text(UInt8ToBin(val, true));
-            UI::EndTooltip();
-        }
-
-        UI::SameLine();
-
-        if ((i + 1) % 4 == 0) {
-            UI::Text("");
-            UI::SameLine();
-        }
-
-        if ((i + 1) % 16 == 0)
-            UI::NewLine();
-    }
 
     UI::PopFont();
 }
